@@ -14,6 +14,7 @@ namespace Eventer
         private void Awake()
         {
             Resolve();
+            DontDestroyOnLoad(gameObject);
         }
 
         private void Start()
@@ -162,10 +163,10 @@ namespace Eventer
 
             foreach (MethodInfo methodInfo in methods)
             {
-                var attribute = methodInfo.GetCustomAttribute(typeof(SubscribeToAttribute));
+                var attribute = methodInfo.GetCustomAttribute(typeof(SubscribeAttribute));
                 if (attribute == null) continue;
 
-                var subscribeToAttribute = (SubscribeToAttribute) attribute;
+                var subscribeToAttribute = (SubscribeAttribute) attribute;
                 
                 if (!EventInfoWrappers.ContainsKey(subscribeToAttribute.EventId)) continue;
                 
