@@ -202,25 +202,29 @@ namespace Eventer
 
             foreach (MethodInfo methodInfo in methods)
             {
-                var attribute = methodInfo.GetCustomAttribute(typeof(SubscribeAttribute));
-                if (attribute == null) continue;
+                var attributes = methodInfo.GetCustomAttributes(typeof(SubscribeAttribute));
 
-                var subscribeToAttribute = (SubscribeAttribute) attribute;
-                
-                if (!EventInfoWrappers.ContainsKey(subscribeToAttribute.EventId)) continue;
-                
-                MethodInfoWrapper wrapper = new MethodInfoWrapper()
+                foreach (var attribute in attributes)
                 {
-                    MethodInfo = methodInfo,
-                    DestroyOnLoad = subscribeToAttribute.DestroyOnLoad,
-                    Order = subscribeToAttribute.Order,
-                    Object = g,
-                    Delegate = Delegate.CreateDelegate(EventInfoWrappers[subscribeToAttribute.EventId].EventInfo.EventHandlerType,
-                        g, methodInfo),
-                    EventId = subscribeToAttribute.EventId,
-                };
+                    if (attribute == null) continue;
+
+                    var subscribeToAttribute = (SubscribeAttribute) attribute;
                 
-                methodInfoWrappers.Add(wrapper);
+                    if (!EventInfoWrappers.ContainsKey(subscribeToAttribute.EventId)) continue;
+                
+                    MethodInfoWrapper wrapper = new MethodInfoWrapper()
+                    {
+                        MethodInfo = methodInfo,
+                        DestroyOnLoad = subscribeToAttribute.DestroyOnLoad,
+                        Order = subscribeToAttribute.Order,
+                        Object = g,
+                        Delegate = Delegate.CreateDelegate(EventInfoWrappers[subscribeToAttribute.EventId].EventInfo.EventHandlerType,
+                            g, methodInfo),
+                        EventId = subscribeToAttribute.EventId,
+                    };
+                
+                    methodInfoWrappers.Add(wrapper);
+                }
             }
 
             return methodInfoWrappers;

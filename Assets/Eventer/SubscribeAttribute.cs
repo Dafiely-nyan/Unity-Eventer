@@ -2,25 +2,27 @@
 
 namespace Eventer
 {
-    [AttributeUsage(AttributeTargets.Method)]
-    public class SubscribeAttribute : Attribute
+    [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
+    public sealed class SubscribeAttribute : Attribute
     {
-        public string EventId { get; private set; }
-        public int Order { get; private set; }
-        public bool DestroyOnLoad { get; private set; }
-
         /// <summary>
-        /// 
+        /// Id of the event to listen
         /// </summary>
-        /// <param name="eventId">An event's string id</param>
-        /// <param name="destroyOnLoad">When a new scene is loaded, should this unsubscribe from event?</param>
-        /// <param name="order">If more than 1 method listens to an event, a method with higher value will execute
-        /// after methods with lower value</param>
-        public SubscribeAttribute(string eventId, int order = 0, bool destroyOnLoad = true)
+        public string EventId { get; }
+        /// <summary>
+        /// Order of execution within an event, lower - earlier. Default is 0
+        /// </summary>
+        public int Order { get; set; }
+        /// <summary>
+        /// Unsubscribe from event when a new scene is loaded. Default is true
+        /// </summary>
+        public bool DestroyOnLoad { get; set; }
+        
+        public SubscribeAttribute(string eventId)
         {
             EventId = eventId;
-            DestroyOnLoad = destroyOnLoad;
-            Order = order;
+            DestroyOnLoad = true;
+            Order = 0;
         }
     }
 }
