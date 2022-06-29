@@ -11,6 +11,7 @@ namespace Eventer
         public bool DestroyOnLoad { get; set; }
         public string EventId { get; set; }
         public List<MethodInfoWrapper> Subscribers { get; set; }
+        public List<MethodInfoWrapper> SubscribersBuffer { get; set; }
         public MonoBehaviour BoundObject { get; set; }
     }
 }

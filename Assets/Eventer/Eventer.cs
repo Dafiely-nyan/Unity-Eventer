@@ -15,7 +15,10 @@ namespace Eventer
 
         private void Awake()
         {
+            float t = Time.realtimeSinceStartup;
             Resolve();
+            float t2 = Time.realtimeSinceStartup;
+            Debug.Log("Reflection took " + (t2-t));
             InitializeSingleInstance();
         }
 
@@ -86,24 +89,28 @@ namespace Eventer
                     m.Delegate == methodInfoWrapper.Delegate);
                 
                 if (sameEntry == null)
-                    EventInfoWrappers[methodInfoWrapper.EventId].Subscribers.Add(methodInfoWrapper);
+                    EventInfoWrappers[methodInfoWrapper.EventId].SubscribersBuffer.Add(methodInfoWrapper);
             }
             
             // Apply ordering
             foreach (string key in EventInfoWrappers.Keys)
             {
                 EventInfoWrappers[key].Subscribers =
-                    EventInfoWrappers[key].Subscribers.OrderBy(m => m.Order).ToList();
+                    EventInfoWrappers[key].SubscribersBuffer.OrderBy(m => m.Order).ToList();
             }
+            
+            // todo in order to actually apply ordering between scenes first unsubscribe all, then merge buffers to 
+            // todo sub lists and there apply sorting
             
             // Finally subscribe
             foreach (string key in EventInfoWrappers.Keys)
             {
-                foreach (var methodInfoWrapper in EventInfoWrappers[key].Subscribers)
+                foreach (var methodInfoWrapper in EventInfoWrappers[key].SubscribersBuffer)
                 {
                     EventInfoWrappers[key].EventInfo.AddEventHandler(EventInfoWrappers[key].BoundObject,
                         methodInfoWrapper.Delegate);
                 }
+                EventInfoWrappers[key].SubscribersBuffer = new List<MethodInfoWrapper>();
             }
         }
 
@@ -184,6 +191,7 @@ namespace Eventer
                     DestroyOnLoad = subscribableAttribute.DestroyOnLoad,
                     EventId = subscribableAttribute.EventId,
                     Subscribers = new List<MethodInfoWrapper>(),
+                    SubscribersBuffer = new List<MethodInfoWrapper>(),
                     BoundObject = g
                 };
                 
