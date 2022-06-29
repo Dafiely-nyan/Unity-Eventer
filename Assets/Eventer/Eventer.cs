@@ -7,14 +7,26 @@ using UnityEngine.SceneManagement;
 
 namespace Eventer
 {
+    [DefaultExecutionOrder(-1000)]
     public class Eventer : MonoBehaviour
     {
         private readonly Dictionary<string, EventInfoWrapper> EventInfoWrappers = new Dictionary<string, EventInfoWrapper>();
+        private static bool _instanced;
 
         private void Awake()
         {
             Resolve();
-            DontDestroyOnLoad(gameObject);
+            InitializeSingleInstance();
+        }
+
+        void InitializeSingleInstance()
+        {
+            if (_instanced) Destroy(gameObject);
+            else
+            {
+                _instanced = true;
+                DontDestroyOnLoad(gameObject);
+            }
         }
 
         private void Start()
@@ -26,9 +38,6 @@ namespace Eventer
         {
             // get all gameObjects on scene
             var gameObjects = getAllObjects();
-
-            // init empty container for listeners
-            List<MethodInfoWrapper> listeners = new List<MethodInfoWrapper>();
 
             for (int i = 0; i < gameObjects.Count; i++)
             {
@@ -52,6 +61,9 @@ namespace Eventer
                 }
             }
             
+            // init empty container for listeners
+            List<MethodInfoWrapper> listeners = new List<MethodInfoWrapper>();
+            
             for (int i = 0; i < gameObjects.Count; i++)
             {
                 // get all monobehaviours within gameobject
@@ -68,7 +80,13 @@ namespace Eventer
             // Add listeners to events watch list
             foreach (MethodInfoWrapper methodInfoWrapper in listeners)
             {
-                EventInfoWrappers[methodInfoWrapper.EventId].Subscribers.Add(methodInfoWrapper);
+                // before add make sure there are no copy of this listener
+                // it is the same method and the same object if their delegates match
+                var sameEntry = EventInfoWrappers[methodInfoWrapper.EventId].Subscribers.Find(m =>
+                    m.Delegate == methodInfoWrapper.Delegate);
+                
+                if (sameEntry == null)
+                    EventInfoWrappers[methodInfoWrapper.EventId].Subscribers.Add(methodInfoWrapper);
             }
             
             // Apply ordering
@@ -93,17 +111,23 @@ namespace Eventer
         {
             // unscubscribe <destroy on load> listeners
             // destroy <destroy on load> events
+            
+            if (lcm == LoadSceneMode.Single)
+                DestroyEventsAndListenersOnLoad();
+            
+            Resolve();
+        }
+
+        void DestroyEventsAndListenersOnLoad()
+        {
+            List<string> totalDeletionEvents = new List<string>();
 
             foreach (string key in EventInfoWrappers.Keys)
             {
                 if (EventInfoWrappers[key].DestroyOnLoad)
                 {
-                    foreach (MethodInfoWrapper methodInfoWrapper in EventInfoWrappers[key].Subscribers)
-                    {
-                        EventInfoWrappers[key].EventInfo.RemoveEventHandler(EventInfoWrappers[key].BoundObject, methodInfoWrapper.Delegate);
-                    }
-
-                    EventInfoWrappers.Remove(key);
+                    DestroyEvent(key);
+                    totalDeletionEvents.Add(key);
                 }
 
                 else
@@ -114,8 +138,7 @@ namespace Eventer
                     {
                         if (methodInfoWrapper.DestroyOnLoad)
                         {
-                            EventInfoWrappers[key].EventInfo.RemoveEventHandler(EventInfoWrappers[key].BoundObject,
-                                methodInfoWrapper.Delegate);
+                            DestroyListener(key, methodInfoWrapper);
                             totalRemove.Add(methodInfoWrapper);
                         }
                     }
@@ -123,6 +146,22 @@ namespace Eventer
                     totalRemove.ForEach(t => EventInfoWrappers[key].Subscribers.Remove(t));
                 }
             }
+            
+            totalDeletionEvents.ForEach(key => EventInfoWrappers.Remove(key));
+        }
+
+        void DestroyEvent(string eventId)
+        {
+            foreach (MethodInfoWrapper methodInfoWrapper in EventInfoWrappers[eventId].Subscribers)
+            {
+                EventInfoWrappers[eventId].EventInfo.RemoveEventHandler(EventInfoWrappers[eventId].BoundObject, methodInfoWrapper.Delegate);
+            }
+        }
+
+        void DestroyListener(string eventId, MethodInfoWrapper listener)
+        {
+            EventInfoWrappers[eventId].EventInfo.RemoveEventHandler(EventInfoWrappers[eventId].BoundObject,
+                listener.Delegate);
         }
         
         List<EventInfoWrapper> getListenableEvents(MonoBehaviour g)
