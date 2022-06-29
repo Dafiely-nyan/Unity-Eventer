@@ -15,10 +15,7 @@ namespace Eventer
 
         private void Awake()
         {
-            float t = Time.realtimeSinceStartup;
             Resolve();
-            float t2 = Time.realtimeSinceStartup;
-            Debug.Log("Reflection took " + (t2-t));
             InitializeSingleInstance();
         }
 
