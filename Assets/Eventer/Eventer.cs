@@ -89,25 +89,37 @@ namespace Eventer
                     EventInfoWrappers[methodInfoWrapper.EventId].SubscribersBuffer.Add(methodInfoWrapper);
             }
             
-            // Apply ordering
-            foreach (string key in EventInfoWrappers.Keys)
+            // To properly apply ordering we need to remove all listeners, merge buffer with removed listeneres
+            // then apply sorting and finally add listeners back
+            // this needs to be done only with those events which buffers are not empty (new listeners available)
+
+            foreach (var key in EventInfoWrappers.Keys)
             {
-                EventInfoWrappers[key].Subscribers =
-                    EventInfoWrappers[key].SubscribersBuffer.OrderBy(m => m.Order).ToList();
-            }
-            
-            // todo in order to actually apply ordering between scenes first unsubscribe all, then merge buffers to 
-            // todo sub lists and there apply sorting
-            
-            // Finally subscribe
-            foreach (string key in EventInfoWrappers.Keys)
-            {
-                foreach (var methodInfoWrapper in EventInfoWrappers[key].SubscribersBuffer)
+                if (EventInfoWrappers[key].SubscribersBuffer.Count > 0)
                 {
-                    EventInfoWrappers[key].EventInfo.AddEventHandler(EventInfoWrappers[key].BoundObject,
-                        methodInfoWrapper.Delegate);
+                    foreach (MethodInfoWrapper methodInfoWrapper in EventInfoWrappers[key].Subscribers)
+                    {
+                        // we remove it from listeners but it still in subscribers list
+                        DestroyListener(key, methodInfoWrapper);
+                    }
+                    
+                    // merge buffer to subscribers list
+                    EventInfoWrappers[key].Subscribers.AddRange(EventInfoWrappers[key].SubscribersBuffer);
+                    
+                    // clear buffer
+                    EventInfoWrappers[key].SubscribersBuffer = new List<MethodInfoWrapper>();
+                    
+                    // apply ordering
+                    EventInfoWrappers[key].Subscribers =
+                        EventInfoWrappers[key].Subscribers.OrderBy(m => m.Order).ToList();
+                    
+                    // subscribe methods
+                    foreach (MethodInfoWrapper methodInfoWrapper in EventInfoWrappers[key].Subscribers)
+                    {
+                        // we remove it from listeners but it still in subscribers list
+                        AddListener(key, methodInfoWrapper);
+                    }
                 }
-                EventInfoWrappers[key].SubscribersBuffer = new List<MethodInfoWrapper>();
             }
         }
 
@@ -165,6 +177,12 @@ namespace Eventer
         void DestroyListener(string eventId, MethodInfoWrapper listener)
         {
             EventInfoWrappers[eventId].EventInfo.RemoveEventHandler(EventInfoWrappers[eventId].BoundObject,
+                listener.Delegate);
+        }
+
+        void AddListener(string eventId, MethodInfoWrapper listener)
+        {
+            EventInfoWrappers[eventId].EventInfo.AddEventHandler(EventInfoWrappers[eventId].BoundObject,
                 listener.Delegate);
         }
         
