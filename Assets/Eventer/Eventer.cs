@@ -145,7 +145,6 @@ namespace Eventer
                     DestroyEvent(key);
                     totalDeletionEvents.Add(key);
                 }
-
                 else
                 {
                     List<MethodInfoWrapper> totalRemove = new List<MethodInfoWrapper>();
