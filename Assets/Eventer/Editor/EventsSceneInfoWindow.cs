@@ -104,8 +104,12 @@ namespace Eventer.Editor
             foreach (string key in _eventsContainer.Keys)
             {
                 bool previousState = _expandedList[k];
+
+                string destroyOnLoadEvent = _eventsContainer[key].DestroyOnLoad ? "[DestroyOnLoad]" : String.Empty;
+                
                 _expandedList[k] =
-                    EditorGUILayout.BeginFoldoutHeaderGroup(_expandedList[k], $"{_eventsContainer[key].BoundObject}.{key}");
+                    EditorGUILayout.BeginFoldoutHeaderGroup(_expandedList[k], 
+                        $"{_eventsContainer[key].BoundObject}.{key} {destroyOnLoadEvent}");
                 
                 if (_expandedList[k] != previousState && _expandedList[k])
                     SetSelectedObject(_eventsContainer[key].BoundObject);
@@ -127,8 +131,12 @@ namespace Eventer.Editor
                         EditorGUI.DrawRect(rect, GUI.color);
 
                         GUI.color = prevColor;
-                        if (GUILayout.Button($"{methodInfoWrapper.Object}.{methodInfoWrapper.MethodInfo.Name}", _customButtonStyle, 
-                            GUILayout.MaxHeight(17)))
+
+                        string destroyOnLoadListener =
+                            methodInfoWrapper.DestroyOnLoad ? "[DestroyOnLoad]" : String.Empty;
+                        
+                        if (GUILayout.Button($"{methodInfoWrapper.Object}.{methodInfoWrapper.MethodInfo.Name} {destroyOnLoadListener}",
+                            _customButtonStyle, GUILayout.MaxHeight(17)))
                         {
                             SetSelectedObject(methodInfoWrapper.Object);
                             _selectedMethodInfoWrapper = methodInfoWrapper;
