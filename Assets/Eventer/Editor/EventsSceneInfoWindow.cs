@@ -18,6 +18,7 @@ namespace Eventer.Editor
         private static bool[] _expandedList;
         private static MethodInfoWrapper _selectedMethodInfoWrapper;
         private static GUIStyle _customButtonStyle;
+        private static GUIStyle _customFoldoutStyle;
         
         [MenuItem("Window/General/Eventer #&e")]
         private static void ShowWindow()
@@ -83,6 +84,7 @@ namespace Eventer.Editor
         private void OnGUI()
         {
             _customButtonStyle = GetCustomButtonStyle();
+            _customFoldoutStyle = GetCustomFoldoutStyle();
             
             EditorGUILayout.BeginHorizontal();
 
@@ -105,11 +107,11 @@ namespace Eventer.Editor
             {
                 bool previousState = _expandedList[k];
 
-                string destroyOnLoadEvent = _eventsContainer[key].DestroyOnLoad ? "[DestroyOnLoad]" : String.Empty;
+                string destroyOnLoadEvent = _eventsContainer[key].DestroyOnLoad ? "<color=#F15952>[DestroyOnLoad]</color>" : String.Empty;
                 
                 _expandedList[k] =
                     EditorGUILayout.BeginFoldoutHeaderGroup(_expandedList[k], 
-                        $"{_eventsContainer[key].BoundObject}.{key} {destroyOnLoadEvent}");
+                        $"<color=#F1A952>{_eventsContainer[key].BoundObject}</color>.<color=#52F1A9>{key}</color> {destroyOnLoadEvent}", _customFoldoutStyle);
                 
                 if (_expandedList[k] != previousState && _expandedList[k])
                     SetSelectedObject(_eventsContainer[key].BoundObject);
@@ -133,9 +135,9 @@ namespace Eventer.Editor
                         GUI.color = prevColor;
 
                         string destroyOnLoadListener =
-                            methodInfoWrapper.DestroyOnLoad ? "[DestroyOnLoad]" : String.Empty;
+                            methodInfoWrapper.DestroyOnLoad ? "<color=#F15952>[DestroyOnLoad]</color>" : String.Empty;
                         
-                        if (GUILayout.Button($"{methodInfoWrapper.Object}.{methodInfoWrapper.MethodInfo.Name} {destroyOnLoadListener}",
+                        if (GUILayout.Button($"<color=#F1A952>{methodInfoWrapper.Object}</color>.<color=#9BF152>{methodInfoWrapper.MethodInfo.Name}</color> {destroyOnLoadListener}",
                             _customButtonStyle, GUILayout.MaxHeight(17)))
                         {
                             SetSelectedObject(methodInfoWrapper.Object);
@@ -182,7 +184,15 @@ namespace Eventer.Editor
         static GUIStyle GetCustomButtonStyle()
         {
             GUIStyle style = new GUIStyle(EditorStyles.label)
-                {margin = {left = 0, right = 0}, padding = {left = 25}};
+                {margin = {left = 0, right = 0}, padding = {left = 25}, richText = true};
+
+            return style;
+        }
+
+        static GUIStyle GetCustomFoldoutStyle()
+        {
+            GUIStyle style = new GUIStyle(EditorStyles.foldoutHeader)
+                {richText = true};
 
             return style;
         }
