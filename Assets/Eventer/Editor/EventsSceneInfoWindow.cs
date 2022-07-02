@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
@@ -8,7 +9,6 @@ namespace Eventer.Editor
 {
     public class EventsSceneInfoWindow : EditorWindow
     {
-        private bool showing;
         private Vector2 _scrollPos;
         private bool _expnadedAll = true;
         
@@ -22,8 +22,6 @@ namespace Eventer.Editor
         [MenuItem("Window/General/Eventer #&e")]
         private static void ShowWindow()
         {
-            InitializeVariables();
-            
             var window = GetWindow<EventsSceneInfoWindow>();
             window.titleContent = new GUIContent("Events on scene");
             window.Show();
@@ -36,8 +34,6 @@ namespace Eventer.Editor
             _eventsContainer = new Dictionary<string, EventInfoWrapper>();
             _selectedMethodInfoWrapper = null;
 
-            _customButtonStyle = GetCustomButtonStyle();
-            
             var objects = Utils.GetAllGameobjectsOnScene();
 
             foreach (GameObject gameObject in objects)
@@ -86,6 +82,8 @@ namespace Eventer.Editor
 
         private void OnGUI()
         {
+            _customButtonStyle = GetCustomButtonStyle();
+            
             EditorGUILayout.BeginHorizontal();
 
             if (GUILayout.Button(_expnadedAll ? "Shrink all" : "Expand all"))
@@ -96,7 +94,7 @@ namespace Eventer.Editor
             
             EditorGUILayout.EndHorizontal();
 
-            var spacing = GetThinLine(5);
+            var spacing = GetRectWithHeight(5);
             EditorGUI.DrawRect(spacing, Color.clear);
             
             _scrollPos =
@@ -181,7 +179,7 @@ namespace Eventer.Editor
             return style;
         }
 
-        Rect GetThinLine(int height)
+        Rect GetRectWithHeight(int height)
         {
             Rect rect = EditorGUILayout.GetControlRect(false, height);
 
@@ -233,6 +231,13 @@ namespace Eventer.Editor
         private void OnInspectorUpdate()
         {
             this.Repaint();
+        }
+
+        // should be called when something is changed in scripts
+        // also seems like editor's styles singleton will give null ref so call it in ongui instead
+        private void OnEnable()
+        {
+            InitializeVariables();
         }
     }
 }
