@@ -108,10 +108,13 @@ namespace Eventer.Editor
                 bool previousState = _expandedList[k];
 
                 string destroyOnLoadEvent = _eventsContainer[key].DestroyOnLoad ? "<color=#F15952>[DestroyOnLoad]</color>" : String.Empty;
+                string staticEvent = _eventsContainer[key].EventInfo.AddMethod.IsStatic ? "<color=#9D52F1>[Static]</color>" : String.Empty;
                 
                 _expandedList[k] =
                     EditorGUILayout.BeginFoldoutHeaderGroup(_expandedList[k], 
-                        $"<color=#F1A952>{_eventsContainer[key].BoundObject}</color>.<color=#52F1A9>{key}</color> {destroyOnLoadEvent}", _customFoldoutStyle);
+                        $"<color=#F1A952>{_eventsContainer[key].BoundObject}</color>.<color=#52F1A9>{_eventsContainer[key].EventInfo.Name}</color>" +
+                        $" {staticEvent}" +
+                        $" {destroyOnLoadEvent}", _customFoldoutStyle);
                 
                 if (_expandedList[k] != previousState && _expandedList[k])
                     SetSelectedObject(_eventsContainer[key].BoundObject);
@@ -136,8 +139,10 @@ namespace Eventer.Editor
 
                         string destroyOnLoadListener =
                             methodInfoWrapper.DestroyOnLoad ? "<color=#F15952>[DestroyOnLoad]</color>" : String.Empty;
+                        string staticMethod = methodInfoWrapper.MethodInfo.IsStatic ? "<color=#9D52F1>[Static]</color>" : String.Empty;
                         
-                        if (GUILayout.Button($"<color=#F1A952>{methodInfoWrapper.Object}</color>.<color=#9BF152>{methodInfoWrapper.MethodInfo.Name}</color> {destroyOnLoadListener}",
+                        if (GUILayout.Button($"<color=#F1A952>{methodInfoWrapper.Object}</color>.<color=#9BF152>{methodInfoWrapper.MethodInfo.Name}</color>" +
+                                             $" {staticMethod} {destroyOnLoadListener}",
                             _customButtonStyle, GUILayout.MaxHeight(17)))
                         {
                             SetSelectedObject(methodInfoWrapper.Object);

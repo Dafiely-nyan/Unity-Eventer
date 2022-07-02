@@ -21,7 +21,7 @@ namespace Eventer
             List<MethodInfoWrapper> methodInfoWrappers = new List<MethodInfoWrapper>();
             
             var methods = g.GetType().GetMethods(
-                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
 
             foreach (MethodInfo methodInfo in methods)
             {
@@ -55,7 +55,7 @@ namespace Eventer
             List<MethodInfoWrapper> methodInfoWrappers = new List<MethodInfoWrapper>();
             
             var methods = g.GetType().GetMethods(
-                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
 
             foreach (MethodInfo methodInfo in methods)
             {
@@ -76,7 +76,7 @@ namespace Eventer
                         Order = subscribeToAttribute.Order,
                         Object = g,
                         Delegate = Delegate.CreateDelegate(eventInfoWrappers[subscribeToAttribute.EventId].EventInfo.EventHandlerType,
-                            g, methodInfo),
+                            methodInfo.IsStatic ? null : g, methodInfo),
                         EventId = subscribeToAttribute.EventId,
                     };
                 
@@ -92,7 +92,7 @@ namespace Eventer
             List<EventInfoWrapper> eventInfoWrappers = new List<EventInfoWrapper>();
             
             var events = g.GetType().GetEvents(
-                BindingFlags.Instance | BindingFlags.Public);
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.Static);
 
             foreach (EventInfo eventInfo in events)
             {
@@ -100,7 +100,7 @@ namespace Eventer
                 if (attribute == null) continue;
 
                 var subscribableAttribute = (SubscribableAttribute) attribute;
-                
+
                 EventInfoWrapper wrapper = new EventInfoWrapper()
                 {
                     EventInfo = eventInfo,
@@ -121,7 +121,8 @@ namespace Eventer
         {
             try
             {
-                Delegate d = Delegate.CreateDelegate(eventInfoWrapper.EventInfo.EventHandlerType, methodInfoWrapper.Object,
+                Delegate d = Delegate.CreateDelegate(eventInfoWrapper.EventInfo.EventHandlerType,
+                    methodInfoWrapper.MethodInfo.IsStatic ? null : methodInfoWrapper.Object,
                     methodInfoWrapper.MethodInfo);
 
                 return true;

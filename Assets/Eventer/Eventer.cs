@@ -168,19 +168,23 @@ namespace Eventer
         {
             foreach (MethodInfoWrapper methodInfoWrapper in EventInfoWrappers[eventId].Subscribers)
             {
-                EventInfoWrappers[eventId].EventInfo.RemoveEventHandler(EventInfoWrappers[eventId].BoundObject, methodInfoWrapper.Delegate);
+                EventInfoWrappers[eventId].EventInfo.RemoveEventHandler(
+                    EventInfoWrappers[eventId].EventInfo.AddMethod.IsStatic ? null : EventInfoWrappers[eventId].BoundObject,
+                    methodInfoWrapper.Delegate);
             }
         }
 
         void DestroyListener(string eventId, MethodInfoWrapper listener)
         {
-            EventInfoWrappers[eventId].EventInfo.RemoveEventHandler(EventInfoWrappers[eventId].BoundObject,
+            EventInfoWrappers[eventId].EventInfo.RemoveEventHandler(
+                EventInfoWrappers[eventId].EventInfo.AddMethod.IsStatic ? null : EventInfoWrappers[eventId].BoundObject,
                 listener.Delegate);
         }
 
         void AddListener(string eventId, MethodInfoWrapper listener)
         {
-            EventInfoWrappers[eventId].EventInfo.AddEventHandler(EventInfoWrappers[eventId].BoundObject,
+            EventInfoWrappers[eventId].EventInfo.AddEventHandler(
+                EventInfoWrappers[eventId].EventInfo.AddMethod.IsStatic ? null : EventInfoWrappers[eventId].BoundObject,
                 listener.Delegate);
         }
     }
