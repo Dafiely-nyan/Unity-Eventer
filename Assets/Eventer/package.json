@@ -1,0 +1,14 @@
+﻿{
+  "name": "com.dafiely.eventer",
+  "version": "1.0.0",
+  "displayName": "Eventer",
+  "description": "An easier way to manage events in Unity",
+  "dependencies": {
+    
+  },
+  "keywords": ["utils", "events", "attributes"],
+  "author": {
+    "name": "Daniil Kalenyuk",
+    "email": "dafiely@witchs-night.com"
+  }
+}
