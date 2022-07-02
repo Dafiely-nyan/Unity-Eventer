@@ -49,6 +49,43 @@ namespace Eventer
 
             return methodInfoWrappers;
         }
+        
+        public static List<MethodInfoWrapper> GetListeners(MonoBehaviour g, Dictionary<string, EventInfoWrapper> eventInfoWrappers)
+        {
+            List<MethodInfoWrapper> methodInfoWrappers = new List<MethodInfoWrapper>();
+            
+            var methods = g.GetType().GetMethods(
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+
+            foreach (MethodInfo methodInfo in methods)
+            {
+                var attributes = methodInfo.GetCustomAttributes(typeof(SubscribeAttribute));
+
+                foreach (var attribute in attributes)
+                {
+                    if (attribute == null) continue;
+
+                    var subscribeToAttribute = (SubscribeAttribute) attribute;
+                    
+                    if (!eventInfoWrappers.ContainsKey(subscribeToAttribute.EventId)) continue;
+
+                    MethodInfoWrapper wrapper = new MethodInfoWrapper()
+                    {
+                        MethodInfo = methodInfo,
+                        DestroyOnLoad = subscribeToAttribute.DestroyOnLoad,
+                        Order = subscribeToAttribute.Order,
+                        Object = g,
+                        Delegate = Delegate.CreateDelegate(eventInfoWrappers[subscribeToAttribute.EventId].EventInfo.EventHandlerType,
+                            g, methodInfo),
+                        EventId = subscribeToAttribute.EventId,
+                    };
+                
+                    methodInfoWrappers.Add(wrapper);
+                }
+            }
+
+            return methodInfoWrappers;
+        }
 
         public static List<EventInfoWrapper> GetEvents(MonoBehaviour g)
         {

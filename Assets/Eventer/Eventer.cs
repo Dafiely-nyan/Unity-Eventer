@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -37,7 +35,7 @@ namespace Eventer
         void Resolve()
         {
             // get all gameObjects on scene
-            var gameObjects = getAllObjects();
+            var gameObjects = Utils.GetAllGameobjectsOnScene();
 
             for (int i = 0; i < gameObjects.Count; i++)
             {
@@ -47,7 +45,7 @@ namespace Eventer
                 foreach (MonoBehaviour monoBehaviour in monoBehaviours)
                 {
                     // create events
-                    var events = getListenableEvents(monoBehaviour);
+                    var events = Utils.GetEvents(monoBehaviour);
 
                     foreach (EventInfoWrapper eventInfoWrapper in events)
                     {
@@ -71,8 +69,9 @@ namespace Eventer
 
                 foreach (MonoBehaviour monoBehaviour in monoBehaviours)
                 {
-                    // get all listeners per within monobehaviour
-                    var listenersPerMono = getAllListeners(monoBehaviour);
+                    // get all listeners within monobehaviour
+                    //var listenersPerMono = getAllListeners(monoBehaviour);
+                    var listenersPerMono = Utils.GetListeners(monoBehaviour, EventInfoWrappers);
                     listeners.AddRange(listenersPerMono);
                 }
             }
@@ -183,78 +182,6 @@ namespace Eventer
         {
             EventInfoWrappers[eventId].EventInfo.AddEventHandler(EventInfoWrappers[eventId].BoundObject,
                 listener.Delegate);
-        }
-        
-        List<EventInfoWrapper> getListenableEvents(MonoBehaviour g)
-        {
-            List<EventInfoWrapper> eventInfoWrappers = new List<EventInfoWrapper>();
-            
-            var events = g.GetType().GetEvents(
-                BindingFlags.Instance | BindingFlags.Public);
-
-            foreach (EventInfo eventInfo in events)
-            {
-                var attribute = eventInfo.GetCustomAttribute(typeof(SubscribableAttribute));
-                if (attribute == null) continue;
-
-                var subscribableAttribute = (SubscribableAttribute) attribute;
-                
-                EventInfoWrapper wrapper = new EventInfoWrapper()
-                {
-                    EventInfo = eventInfo,
-                    DestroyOnLoad = subscribableAttribute.DestroyOnLoad,
-                    EventId = subscribableAttribute.EventId,
-                    Subscribers = new List<MethodInfoWrapper>(),
-                    SubscribersBuffer = new List<MethodInfoWrapper>(),
-                    BoundObject = g
-                };
-                
-                eventInfoWrappers.Add(wrapper);
-            }
-
-            return eventInfoWrappers;
-        }
-
-        List<MethodInfoWrapper> getAllListeners(MonoBehaviour g)
-        {
-            List<MethodInfoWrapper> methodInfoWrappers = new List<MethodInfoWrapper>();
-            
-            var methods = g.GetType().GetMethods(
-                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-
-            foreach (MethodInfo methodInfo in methods)
-            {
-                var attributes = methodInfo.GetCustomAttributes(typeof(SubscribeAttribute));
-
-                foreach (var attribute in attributes)
-                {
-                    if (attribute == null) continue;
-
-                    var subscribeToAttribute = (SubscribeAttribute) attribute;
-                
-                    if (!EventInfoWrappers.ContainsKey(subscribeToAttribute.EventId)) continue;
-                
-                    MethodInfoWrapper wrapper = new MethodInfoWrapper()
-                    {
-                        MethodInfo = methodInfo,
-                        DestroyOnLoad = subscribeToAttribute.DestroyOnLoad,
-                        Order = subscribeToAttribute.Order,
-                        Object = g,
-                        Delegate = Delegate.CreateDelegate(EventInfoWrappers[subscribeToAttribute.EventId].EventInfo.EventHandlerType,
-                            g, methodInfo),
-                        EventId = subscribeToAttribute.EventId,
-                    };
-                
-                    methodInfoWrappers.Add(wrapper);
-                }
-            }
-
-            return methodInfoWrappers;
-        }
-
-        List<GameObject> getAllObjects()
-        {
-            return GameObject.FindObjectsOfType<GameObject>().ToList();
         }
     }
 }
