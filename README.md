@@ -39,3 +39,9 @@ By default `DestroyOnLoad = true` and `Order = 0`.
 You can obviously point to a problem that with this approach you can no longer track what follows which event. This is obviously a huge problem, but it is pretty much 
 solved by a custom editor window that allows you to see all subscribable events and their listeners. To see that window simply press `SHIFT-ALT-E` or `Window/General/Eventer`. It shows an expanded list of all events and thier handlers found in scene. You can then press "Verify" to check whether everything is fine and all handlers match their events signature. You can click on shown entries to ping and select a gameobject those entries are bound to.
 If a listener subscribed to an event that can't be found in scene (either mismatch for naming or an event declared in other scene) then it will be added to `<Unknown event>` list so you can easily see all of those. They are not gonna be checked while Verifiying procedure.
+
+## Installation
+Heres few ways how you can install it to your project:
+
+1. Open package manager inside Unity project -> press "+" -> from git url -> https://github.com/Dafiely-nyan/Unity-Eventer.git 
+2. Go to releases https://github.com/Dafiely-nyan/Unity-Eventer/releases download latest (`.unitypackage`). Then inside your Unity project press right mouse click somewhere inside Assets folder -> Import package -> select downloaded package.
