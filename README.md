@@ -1,115 +1,39 @@
 # Unity Eventer
 
-## tl;dr
-Allows to add events from MonoBehaviours to container and easily subscribe to them without a need to care about explicitly subscribing / unsubscribing from them
+Allows you to abstract from managing event's subscriptions by introducing few attributes for way easier management.
 
-## The problem
-Whenever you have to deal with anything events related in Unity you can quite quickly fall into an annoying problem: you need to care way too much about subscribing and
-unsubscribing from them. For example, lets take a very simple `Network` class that fires an event when a user sends request:
+By default, you are adding event's handlers in `Start` and remove them in `OnDestroy`. This is fine, but when there are lots and lots of handlers each of which 
+should probably launch after another (so with correct order) it results in a hell mess with scripts execution order and many others annoying things.
+
+`Eventer` brings two attributes - `[Subscribable]` and `[Subscriber]`. You put those on MonoBehaviours events and event handlers respectively and no longer need 
+to manually manage event handlers lifecyle as for now Reflection will do it for you.
+
+Here's quick examples:
+
+Declaring an event:
 ```c#
-using System;
-using UnityEngine;
-
-public class Network : MonoBehaviour
-{
-    public event Action OnRequestStart;
-
-    public void SendRequest()
-    {
-        // some logic could be here
-        OnRequestStart?.Invoke();
-    }
-
-    // Singleton so we can easily access it from other scripts
-    // Also not gonna be deleted between scenes since all scenes could rely on network events
-    public static Network Instance;
-
-    private void Awake()
-    {
-        if (!Instance)
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-        }
-        else Destroy(gameObject);
-    }
-}
-```
-Its pointless to have events if we dont listen to them, so lets say we have a class `Player` that has some logic that needs to run when we send a request.
-In simple case it could look something like this:
-```c#
-using UnityEngine;
-
-public class Player : MonoBehaviour
-{
-    public string Name = "John";
-
-    private void Start()
-    {
-        Network.Instance.OnRequestStart += OnRequestStart;
-    }
-
-    private void OnDestroy()
-    {
-        Network.Instance.OnRequestStart -= OnRequestStart;
-    }
-
-    void OnRequestStart()
-    {
-        Debug.Log("Request started and my name is " + Name);
-    }
-}
-```
-In `Start` we subscribe and in `OnDestroy` we unsubscribe. `Player` in this example will be only within a single scene, while instance of `Network` will not be
-destroyed while application is running, so when a new scene is loaded we need to make sure we unsubscribed from its events, otherwise we will get an errors.
-This is where it gets annoying. If we need to add another method that needs to react to some event (handler) we again need to add it to `Start` and `OnDestroy`. 
-And even something worse, what if you have to make sure a specific handler runs exactly after other handlers completed their job? This could be a disaster.
-In reality there could be tens of scripts that rely on such events making you spend too much time on adding them everywhere.
-
-This where **Eventer** enters the game. 
-
-## The solution
-**Eventer** provides two Attributes: `[Subscribable]` and `[Subscribe]` that you can apply to MonoBehaviours in your scene. Then, .NET Reflection will check every
-of them and handle all subscriptions for you. Lets see how previous example will change using those attributes instead.
-
-The only thing we need to change in `Network` class is to add `[Subscribable]` attribute on top of our event:
-```c#
-[Subscribable("MyEvent")]
-public event Action OnRequestStart;
-```
-The `string` you pass to its constructor bind that event for that specific string. Then, in any MonoBehaviour you can then easily subscribe to it by adding 
-`[Subscribe]` attribute on top of a method that needs to listen to that event. Our `Player` class now will look like this:
-```c#
-using Eventer;
-using UnityEngine;
-
-public class Player : MonoBehaviour
-{
-    public string Name = "John";
-
-    [Subscribe("MyEvent", 0, true)]
-    void OnRequestStart()
-    {
-        Debug.Log("Request started and my name is " + Name);
-    }
-}
-```
-A `string` first param tells to which event listen, `int` second param specifies order of execution (default 0) and `bool` param specifies whether it is needed
-to unsubscribe this method from event it is listening to when a new scene is loaded (default true). You'd normally set last param to `false` in case an
-object this MonoBehaviour is attached to has `DontDestroyOnLoad()` somewhere.
-```c#
-    [Subscribe("MyEvent", 0)]
-    void OnRequestStart()
-    {
-        Debug.Log("Request started and my name is " + Name);
-    }
-    
-    // will execute before OnRequestStart() when event is fired
-    [Subscribe("MyEvent", -1)]
-    void OnRequestStart2()
-    {
-        Debug.Log("Request started and my name is " + Name);
-    }
+[Subscribable("MyFirstEvent", DestroyOnLoad = false)]
+public event Action<string> OnRequestOk;
 ```
 
-*to be continued..*
+A string `"MyFirstEvent"` will be then used by subscribers to listen for this specific event.
+`DestroyOnLoad = false` means that after a new scene is loaded (in a single mode) this event wont be destroyed. You will only set this to false if 
+this event is declared in an object thats will be present in all scenes and never be destroyed (Singleton with `DontDestroyOnLoad()` call).
+By default `DestroyOnLoad` is set to `true`.
+Event must be public and non static to be seen.
+
+Then in any MonoBehavior you can listen to this event:
+
+```c#
+[Subscribe("MyFirstEvent", DestroyOnLoad = false, Order = -1)]
+void Listener(string s) => Debug.Log(s);
+```
+
+A string `"MyFirstEvent"` says what event we want to listen to, `DestroyOnLoad` tells whether this event handler should be destroyed when a new scene is loaded 
+(similar to how it works in `[Subscribable]`) and `Order` tells order of execution this specific event handler within an event. A handlers with lower value will be 
+executed earlier than those with higher.
+By default `DestroyOnLoad = true` and `Order = 0`.
+
+You can obviously point to a problem that with this approach you can no longer track what follows which event. This is obviously a huge problem, but it is pretty much 
+solved by a custom editor window that allows you to see all subscribable events and their listeners. To see that window simply press `SHIFT-ALT-E` or `Window/General/Eventer`. It shows an expanded list of all events and thier handlers found in scene. You can then press "Verify" to check whether everything is fine and all handlers match their events signature. You can click on shown entries to ping and select a gameobject those entries are bound to.
+If a listener subscribed to an event that can't be found in scene (easier mismatch for naming or an event declared in other scene) then it will be added to `<Unknown event>` list so you can easily see all of those. They are not gonna be checked while Verifiying procedure.
