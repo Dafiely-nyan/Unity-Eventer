@@ -8,6 +8,8 @@ should probably launch after another (so with correct order) it results in a hel
 `Eventer` brings two attributes - `[Subscribable]` and `[Subscriber]`. You put those on MonoBehaviours events and event handlers respectively and no longer need 
 to manually manage event handlers lifecyle as for now Reflection will do it for you.
 
+In order for this to work make sure you created an empty gameobject in your scene and added `Eventer` component to it. That object will be `DontDestroyOnLoad` and obviously has to be placed at the very first game scene
+
 Here's quick examples:
 
 Declaring an event:
