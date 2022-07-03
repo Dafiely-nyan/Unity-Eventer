@@ -11,6 +11,7 @@ namespace Eventer.Editor
     {
         private Vector2 _scrollPos;
         private bool _expnadedAll = true;
+        private const string UNKNOWN_EVENT = "<Unknown event>";
         
         private static List<EventInfoWrapper> _events = new List<EventInfoWrapper>();
         private static List<MethodInfoWrapper> _listeners = new List<MethodInfoWrapper>();
@@ -61,10 +62,10 @@ namespace Eventer.Editor
 
                 else
                 {
-                    if (!_eventsContainer.ContainsKey("<Unknown event>"))
-                        _eventsContainer.Add("<Unknown event>", new EventInfoWrapper() {Subscribers = new List<MethodInfoWrapper>()});
+                    if (!_eventsContainer.ContainsKey(UNKNOWN_EVENT))
+                        _eventsContainer.Add(UNKNOWN_EVENT, new EventInfoWrapper() {Subscribers = new List<MethodInfoWrapper>()});
                     
-                    _eventsContainer["<Unknown event>"].Subscribers.Add(methodInfoWrapper);
+                    _eventsContainer[UNKNOWN_EVENT].Subscribers.Add(methodInfoWrapper);
                 }
             }
 
@@ -106,16 +107,25 @@ namespace Eventer.Editor
             foreach (string key in _eventsContainer.Keys)
             {
                 bool previousState = _expandedList[k];
+                
+                if (key != UNKNOWN_EVENT)
+                {
+                    string destroyOnLoadEvent = _eventsContainer[key].DestroyOnLoad ? "<color=#F15952>[DestroyOnLoad]</color>" : String.Empty;
+                    string staticEvent = _eventsContainer[key].EventInfo.AddMethod.IsStatic ? "<color=#9D52F1>[Static]</color>" : String.Empty;
+                    
+                    _expandedList[k] =
+                        EditorGUILayout.BeginFoldoutHeaderGroup(_expandedList[k], 
+                            $"<color=#F1A952>{_eventsContainer[key].BoundObject}</color>.<color=#52F1A9>{_eventsContainer[key].EventInfo.Name}</color>" +
+                            $" {staticEvent}" +
+                            $" {destroyOnLoadEvent}", _customFoldoutStyle);
+                }
+                else
+                {
+                    _expandedList[k] =
+                        EditorGUILayout.BeginFoldoutHeaderGroup(_expandedList[k], 
+                            $"<color=red>{UNKNOWN_EVENT}</color>", _customFoldoutStyle);
+                }
 
-                string destroyOnLoadEvent = _eventsContainer[key].DestroyOnLoad ? "<color=#F15952>[DestroyOnLoad]</color>" : String.Empty;
-                string staticEvent = _eventsContainer[key].EventInfo.AddMethod.IsStatic ? "<color=#9D52F1>[Static]</color>" : String.Empty;
-                
-                _expandedList[k] =
-                    EditorGUILayout.BeginFoldoutHeaderGroup(_expandedList[k], 
-                        $"<color=#F1A952>{_eventsContainer[key].BoundObject}</color>.<color=#52F1A9>{_eventsContainer[key].EventInfo.Name}</color>" +
-                        $" {staticEvent}" +
-                        $" {destroyOnLoadEvent}", _customFoldoutStyle);
-                
                 if (_expandedList[k] != previousState && _expandedList[k])
                     SetSelectedObject(_eventsContainer[key].BoundObject);
                 
@@ -169,7 +179,7 @@ namespace Eventer.Editor
             
             foreach (var key in _eventsContainer.Keys)
             {
-                if (key == "<Unknown event>")
+                if (key == UNKNOWN_EVENT)
                 {
                     ignored += _eventsContainer[key].Subscribers.Count;
                     continue;
@@ -233,6 +243,8 @@ namespace Eventer.Editor
 
         void SetSelectedObject(Object o)
         {
+            if (!o) return;
+            
             EditorGUIUtility.PingObject(o);
             Selection.activeObject = o;
         }
