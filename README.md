@@ -44,4 +44,4 @@ If a listener subscribed to an event that can't be found in scene (either mismat
 Heres few ways how you can install it to your project:
 
 1. Open package manager inside Unity project -> press "+" -> from git url -> https://github.com/Dafiely-nyan/Unity-Eventer.git 
-2. Go to [releases](https://github.com/Dafiely-nyan/Unity-Eventer/releases) download latest (`.unitypackage`). Then inside your Unity project press right mouse click somewhere inside Assets folder -> Import package -> select downloaded package.
+2. Go to [releases](https://github.com/Dafiely-nyan/Unity-Eventer/releases) and download latest (`.unitypackage`). Then inside your Unity project press right mouse click somewhere inside Assets folder -> Import package -> select downloaded package.
